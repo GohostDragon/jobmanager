@@ -15,6 +15,30 @@ class Jobs:
         self.closeDt = closeDt
         self.wantedInfoUrl = wantedInfoUrl
 
+    def addcorp(self,corpNm,reperNm,totPsncnt,indTpCdNm,busiCont,corpAddr,busiSize):
+        self.corpName = corpNm
+        self.reperNm = reperNm
+        self.totPsncnt = totPsncnt
+        self.indTpCdNm = indTpCdNm
+        self.busiCont = busiCont
+        self.corpAddr = corpAddr
+        self.busiSize = busiSize
+
+    def addcwanted(self,jobsNm,wantedTitle,receiptCloseDt,empTpNm,salTpNm,enterTpNm,eduNm,certificate,compAbl,selMthd,rcptMthd,submitDoc,workdayWorkhrCont):
+        self.jobsNm = jobsNm
+        self.wantedTitle = wantedTitle
+        self.receiptCloseDt = receiptCloseDt
+        self.empTpNm = empTpNm
+        self.salTpNm = salTpNm
+        self.enterTpNm = enterTpNm
+        self.eduNm = eduNm
+        self.certificate = certificate
+        self.compAbl = compAbl
+        self.selMthd = selMthd
+        self.rcptMthd = rcptMthd
+        self.submitDoc = submitDoc
+        self.workdayWorkhrCont = workdayWorkhrCont
+
     def pintJobs(self):
         print("회사명:",self.company)
         print("업무:", self.title)
