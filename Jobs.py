@@ -24,7 +24,7 @@ class Jobs:
         self.corpAddr = corpAddr
         self.busiSize = busiSize
 
-    def addcwanted(self,jobsNm,wantedTitle,receiptCloseDt,empTpNm,salTpNm,enterTpNm,eduNm,certificate,compAbl,selMthd,rcptMthd,submitDoc,workdayWorkhrCont):
+    def addcwanted(self,jobsNm,wantedTitle,receiptCloseDt,empTpNm,salTpNm,enterTpNm,eduNm,certificate,compAbl,selMthd,rcptMthd,submitDoc,workdayWorkhrCont,jobCont):
         self.jobsNm = jobsNm
         self.wantedTitle = wantedTitle
         self.receiptCloseDt = receiptCloseDt
@@ -38,6 +38,7 @@ class Jobs:
         self.rcptMthd = rcptMthd
         self.submitDoc = submitDoc
         self.workdayWorkhrCont = workdayWorkhrCont
+        self.jobCont = jobCont
 
     def pintJobs(self):
         print("회사명:",self.company)
