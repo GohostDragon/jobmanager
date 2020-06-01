@@ -86,7 +86,7 @@ class JobsTk:
         self.combo2['value'] = comboregion
         self.combo2.current(0)
 
-    def rsearch(self,type):#지역검색 결과
+    def rsearch(self,type):#검색 결과
         rstr = ""
         if(self.combo.current() == 0):
             rstr = ""
@@ -120,6 +120,43 @@ class JobsTk:
             self.listbox.insert(END, self.jobs[i].pirntstrJobs())
 
         self.lpage.configure(text="[" + str(self.page)+'/'+str(max_page)+"]")
+    def showmap(self):
+        api_key = "AIzaSyDT7sSTMO5sgyqu_1l0KuaIK_QAyv0U44c"
+        url = "https://maps.googleapis.com/maps/api/staticmap?"
+        t = (str)(self.jobs[self.sindex].corpAddr)
+        center = t.replace(" ","")
+        if self.maptype == 0:
+            tstr = '&maptype=roadmap'
+        else:
+            tstr = '&maptype=hybrid'
+
+        url = url + "center=" + center + "&zoom=" + str(self.mapzoom) + "&size=300x300"+'&markers=size:middle%7Ccolor:green%7C'+ center +tstr+ "&key="+api_key+"&sensor=true"
+        #print(url)
+        response = requests.get(url)
+        img_data = response.content
+        img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
+
+        label = Label(self.frame1, image=img, height=300, width=300)
+        label.place(x=STRX, y=STRY + STRD * 15)
+
+        self.mapimage = Label(self.frame1,image=photo,height=400,width=400)
+    def mapzoomchange(self,type):
+        if type == 0:
+            self.mapzoom += 1
+            if self.mapzoom > 19:
+                self.mapzoom = 19
+        else:
+            self.mapzoom -= 1
+            if self.mapzoom < 10:
+                self.mapzoom = 10
+        self.showmap()
+
+    def maptypechange(self,type):
+        if type == 0:
+            self.maptype = 0
+        else:
+            self.maptype = 1
+        self.showmap()
 
     def coplist(self,strxml,index):
         tree = ElementTree.fromstring(strxml)
@@ -155,6 +192,7 @@ class JobsTk:
 
     def selectlist(self,event):#리스트 목록 선택할때 정보 보여주기
         index = self.listbox.curselection()[0]
+        self.sindex = index
         #self.jobs[index].pintJobs()
         text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo='+ self.jobs[index].wantedAuthNo +'&infoSvc=VALIDATION')
         self.coplist(text,index)
@@ -178,22 +216,7 @@ class JobsTk:
         self.indTpCdNm.configure(text="업종 : " + self.jobs[index].indTpCdNm)
         self.busiCont.configure(text="주된 업종 : " + self.jobs[index].busiCont)
 
-        api_key = "AIzaSyDT7sSTMO5sgyqu_1l0KuaIK_QAyv0U44c"
-        url = "https://maps.googleapis.com/maps/api/staticmap?"
-        t = (str)(self.jobs[index].corpAddr)
-        center = t.replace(" ","")
-        zoom = 18
-        url = url + "center=" + center + "&zoom=" + str(zoom) + "&size=300x300"+'&markers=size:middle%7Ccolor:green%7C'+ center + "&key="+api_key+"&sensor=true"
-        #print(url)
-        response = requests.get(url)
-        img_data = response.content
-        img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
-
-        label = Label(self.frame1, image=img, height=300, width=300)
-        label.place(x=STRX, y=STRY + STRD * 15)
-
-        self.mapimage = Label(self.frame1,image=photo,height=400,width=400)
-        #self.mapimage.place(x=STRX, y=STRY + STRD * 12)
+        self.showmap()
 
     def __init__(self):
         self.window = Tk()
@@ -204,7 +227,8 @@ class JobsTk:
         self.TempFont = font.Font(size=10, weight='bold', family='Consolas')
 
         self.label = []
-        self.entry = []
+        self.mapzoom = 18
+        self.maptype = 0
 
         self.notebook = tkinter.ttk.Notebook(self.window,width = 1280, height = 800)
         self.notebook.place(x=0,y=0)
@@ -288,7 +312,17 @@ class JobsTk:
         self.busiCont = Label(self.frame1,text="주된 업종 : ",font=self.TempFont)
         self.busiCont.place(x=STRX, y=STRY+STRD*14)
 
+        self.mapplus = Button(self.frame1, width=3, text='+', command=lambda : self.mapzoomchange(0))
+        self.mapplus.place(x=1100, y=600)
 
+        self.mapmin = Button(self.frame1, width=3, text='-', command=lambda : self.mapzoomchange(1))
+        self.mapmin.place(x=1100, y=630)
+
+        self.maproad = Button(self.frame1, width=3, text='일반', command=lambda : self.maptypechange(0))
+        self.maproad.place(x=1100, y=660)
+
+        self.maphybrid = Button(self.frame1, width=3, text='위성', command=lambda : self.maptypechange(1))
+        self.maphybrid.place(x=1100, y=690)
 
         self.frame2 = tkinter.Frame(self.window)
         self.notebook.add(self.frame2, text="북마크")
