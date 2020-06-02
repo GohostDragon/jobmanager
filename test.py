@@ -136,10 +136,18 @@ class JobsTk:
         img_data = response.content
         img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
 
-        label = Label(self.frame1, image=img, height=300, width=300)
+        label = Label(self.window, image=img, height=300, width=300)
         label.place(x=STRX, y=STRY + STRD * 15)
 
-        self.mapimage = Label(self.frame1,image=photo,height=400,width=400)
+        self.mapimage = Label(self.window,image=photo,height=400,width=400)
+
+    def addbookmark(self):
+
+        self.bookmarklist.append(self.jobs[self.sindex])
+        self.bookmarkbox.delete(0, END)
+        for i in range(len(self.bookmarklist)):
+            self.bookmarkbox.insert(END, self.bookmarklist[i].pirntstrJobs())
+
     def mapzoomchange(self,type):
         if type == 0:
             self.mapzoom += 1
@@ -190,33 +198,98 @@ class JobsTk:
         workdayWorkhrCont = wantedinfo.find('workdayWorkhrCont').text
         self.jobs[index].addcwanted(jobsNm,wantedTitle,receiptCloseDt,empTpNm,salTpNm,enterTpNm,eduNm,certificate,compAbl,selMthd,rcptMthd,submitDoc,workdayWorkhrCont,jobCont)
 
+    def createLabel(self, lframe):
+        self.title = Label(lframe, text="업무 : ", font=self.TempFont)
+        self.title.place(x=STRX, y=STRY)
+
+        self.jobCont = Label(lframe, text="", font=self.TempFont)
+        self.jobCont.place(x=STRX, y=STRY + STRD)
+
+        self.salTpNm = Label(lframe, text="", font=self.TempFont)
+        self.salTpNm.place(x=STRX, y=STRY + STRD * 2)
+        self.holidayTpNm = Label(lframe, text="근무형태 : ", font=self.TempFont)
+        self.holidayTpNm.place(x=STRX, y=STRY + STRD * 3)
+
+        self.regionstr = Label(lframe, text="지역 : ", font=self.TempFont)
+        self.regionstr.place(x=STRX, y=STRY + STRD * 5)
+        self.certificate = Label(lframe, text="자격증 : ", font=self.TempFont)
+        self.certificate.place(x=STRX, y=STRY + STRD * 6)
+        self.minEdubg = Label(lframe, text="학력 : ", font=self.TempFont)
+        self.minEdubg.place(x=STRX, y=STRY + STRD * 7)
+        self.career = Label(lframe, text="경력 : ", font=self.TempFont)
+        self.career.place(x=STRX, y=STRY + STRD * 8)
+        self.regDt = Label(lframe, text="채용기간 : ", font=self.TempFont)
+        self.regDt.place(x=STRX, y=STRY + STRD * 9)
+        self.rcptMthd = Label(lframe, text="접수 방법 : ", font=self.TempFont)
+        self.rcptMthd.place(x=STRX, y=STRY + STRD * 10)
+        self.company = Label(text="회사명 : ", font=self.TempFont)
+        self.company.place(x=STRX, y=STRY + STRD * 11)
+        self.reperNm = Label(lframe, text="대표 : ", font=self.TempFont)
+        self.reperNm.place(x=STRX, y=STRY + STRD * 12)
+        self.indTpCdNm = Label(lframe, text="업종 : ", font=self.TempFont)
+        self.indTpCdNm.place(x=STRX, y=STRY + STRD * 13)
+        self.busiCont = Label(lframe, text="주된 업종 : ", font=self.TempFont)
+        self.busiCont.place(x=STRX, y=STRY + STRD * 14)
+
+        self.mapplus = Button(lframe, width=3, text='+', command=lambda: self.mapzoomchange(0))
+        self.mapplus.place(x=1100, y=600)
+
+        self.mapmin = Button(lframe, width=3, text='-', command=lambda: self.mapzoomchange(1))
+        self.mapmin.place(x=1100, y=630)
+
+        self.maproad = Button(lframe, width=3, text='일반', command=lambda: self.maptypechange(0))
+        self.maproad.place(x=1100, y=660)
+
+        self.maphybrid = Button(lframe, width=3, text='위성', command=lambda: self.maptypechange(1))
+        self.maphybrid.place(x=1100, y=690)
+
+    def printLabel(self):
+        # self.jobs[index].pintJobs()
+        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo=' +self.tempList[self.sindex].wantedAuthNo + '&infoSvc=VALIDATION')
+        self.coplist(text, self.sindex)
+
+        self.company.configure(text="회사명 : " + self.tempList[self.sindex].corpName)
+        self.title.configure(text=self.tempList[self.sindex].wantedTitle)
+        self.salTpNm.configure(text=self.tempList[self.sindex].salTpNm)
+        self.certificate.configure(text="자격증 : " + self.tempList[self.sindex].certificate)
+        self.regionstr.configure(text="주소 : " + self.tempList[self.sindex].corpAddr)
+        wdstr = (str)(self.tempList[self.sindex].workdayWorkhrCont)
+        self.tempList[self.sindex].workdayWorkhrCont = wdstr.strip()
+        self.holidayTpNm.configure(text=self.tempList[self.sindex].workdayWorkhrCont)
+        self.minEdubg.configure(text="학력 : " + self.tempList[self.sindex].minEdubg)
+        self.career.configure(text="경력 : " + self.tempList[self.sindex].career)
+        self.regDt.configure(text="채용기간 : " + self.tempList[self.sindex].regDt + "~" + self.tempList[self.sindex].closeDt)
+        self.rcptMthd.configure(text="접수 방법 : " + self.tempList[self.sindex].rcptMthd)
+
+        wdstr = (str)(self.tempList[self.sindex].jobCont)
+        adstr = wdstr.strip()
+        self.tempList[self.sindex].jobCont = adstr[:100]
+        self.jobCont.configure(text=self.tempList[self.sindex].jobCont)
+        self.reperNm.configure(text="대표 : " + self.tempList[self.sindex].reperNm)
+        self.indTpCdNm.configure(text="업종 : " + self.tempList[self.sindex].indTpCdNm)
+        self.busiCont.configure(text="주된 업종 : " + self.tempList[self.sindex].busiCont)
+
+        self.showmap()
+
     def selectlist(self,event):#리스트 목록 선택할때 정보 보여주기
         index = self.listbox.curselection()[0]
         self.sindex = index
-        #self.jobs[index].pintJobs()
-        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo='+ self.jobs[index].wantedAuthNo +'&infoSvc=VALIDATION')
-        self.coplist(text,index)
 
+        self.tempList = []
+        for i in range(len(self.jobs)):
+            self.tempList.append(self.jobs[i])
 
-        self.company.configure(text="회사명 : " + self.jobs[index].company)
-        self.title.configure(text=self.jobs[index].wantedTitle)
-        self.salTpNm.configure(text=self.jobs[index].salTpNm)
-        self.certificate .configure(text="자격증 : " + self.jobs[index].certificate)
-        self.regionstr.configure(text="주소 : " + self.jobs[index].corpAddr)
-        wdstr = (str)(self.jobs[index].workdayWorkhrCont)
-        self.jobs[index].workdayWorkhrCont = wdstr.strip()
-        self.holidayTpNm.configure(text=self.jobs[index].workdayWorkhrCont)
-        self.minEdubg.configure(text="학력 : " + self.jobs[index].minEdubg)
-        self.career.configure(text="경력 : " + self.jobs[index].career)
-        self.regDt.configure(text="채용기간 : " + self.jobs[index].regDt+"~"+ self.jobs[index].closeDt)
-        self.rcptMthd.configure(text="접수 방법 : " + self.jobs[index].rcptMthd)
+        self.printLabel()
 
-        self.jobCont.configure(text=self.jobs[index].jobCont)
-        self.reperNm.configure(text="대표 : " + self.jobs[index].reperNm)
-        self.indTpCdNm.configure(text="업종 : " + self.jobs[index].indTpCdNm)
-        self.busiCont.configure(text="주된 업종 : " + self.jobs[index].busiCont)
+    def selectlist2(self,event):#리스트 목록 선택할때 정보 보여주기
+        index = self.bookmarkbox.curselection()[0]
+        self.sindex = index
 
-        self.showmap()
+        self.tempList = []
+        for i in range(len(self.bookmarklist)):
+            self.tempList.append(self.bookmarklist[i])
+
+        self.printLabel()
 
     def __init__(self):
         self.window = Tk()
@@ -226,11 +299,12 @@ class JobsTk:
 
         self.TempFont = font.Font(size=10, weight='bold', family='Consolas')
 
-        self.label = []
+        self.bookmarklist = []
+        self.tempList = []
         self.mapzoom = 18
         self.maptype = 0
 
-        self.notebook = tkinter.ttk.Notebook(self.window,width = 1280, height = 800)
+        self.notebook = tkinter.ttk.Notebook(self.window,width = 730, height = 800)
         self.notebook.place(x=0,y=0)
 
         self.frame1 = tkinter.Frame(self.window)
@@ -269,7 +343,7 @@ class JobsTk:
         self.listbox = Listbox(self.frame1,selectmode = 'single',width=100, height = 30)
         self.listbox.place(x=0,y=100)
 
-        self.listbox.bind("<<ListboxSelect>>",self.selectlist)
+        self.listbox.bind("<<ListboxSelect>>", self.selectlist)
 
         self.lpage = Label(text="[ 0 / 0 ]")
         self.lpage.place(x=300, y=620)
@@ -280,55 +354,20 @@ class JobsTk:
         self.bleft = Button(self.frame1, width=3, text='<', command=lambda : self.rsearch(2))
         self.bleft.place(x=250, y=595)
 
-        self.title = Label(self.frame1,text="업무 : ",font=self.TempFont)
-        self.title.place(x=STRX, y=STRY)
+        self.bookmarkb = Button(self.frame1, width=5, text='북마크', command=self.addbookmark)
+        self.bookmarkb.place(x=660, y=590)
 
-        self.jobCont = Label(self.frame1,text="",font=self.TempFont)
-        self.jobCont.place(x=STRX, y=STRY+STRD)
-
-        self.salTpNm = Label(self.frame1,text="",font=self.TempFont)
-        self.salTpNm.place(x=STRX, y=STRY+STRD*2)
-        self.holidayTpNm = Label(self.frame1,text="근무형태 : ",font=self.TempFont)
-        self.holidayTpNm.place(x=STRX, y=STRY+STRD*3)
-
-        self.regionstr = Label(self.frame1,text="지역 : ",font=self.TempFont)
-        self.regionstr.place(x=STRX, y=STRY+STRD*5)
-        self.certificate = Label(self.frame1,text="자격증 : ",font=self.TempFont)
-        self.certificate.place(x=STRX, y=STRY+STRD*6)
-        self.minEdubg = Label(self.frame1,text="학력 : ",font=self.TempFont)
-        self.minEdubg.place(x=STRX, y=STRY+STRD*7)
-        self.career = Label(self.frame1,text="경력 : ",font=self.TempFont)
-        self.career.place(x=STRX, y=STRY+STRD*8)
-        self.regDt = Label(self.frame1,text="채용기간 : ",font=self.TempFont)
-        self.regDt.place(x=STRX, y=STRY+STRD*9)
-        self.rcptMthd = Label(self.frame1,text="접수 방법 : ",font=self.TempFont)
-        self.rcptMthd.place(x=STRX, y=STRY+STRD*10)
-        self.company = Label(text="회사명 : ",font=self.TempFont)
-        self.company.place(x=STRX, y=STRY+355)
-        self.reperNm = Label(self.frame1,text="대표 : ",font=self.TempFont)
-        self.reperNm.place(x=STRX, y=STRY+STRD*12)
-        self.indTpCdNm = Label(self.frame1,text="업종 : ",font=self.TempFont)
-        self.indTpCdNm.place(x=STRX, y=STRY+STRD*13)
-        self.busiCont = Label(self.frame1,text="주된 업종 : ",font=self.TempFont)
-        self.busiCont.place(x=STRX, y=STRY+STRD*14)
-
-        self.mapplus = Button(self.frame1, width=3, text='+', command=lambda : self.mapzoomchange(0))
-        self.mapplus.place(x=1100, y=600)
-
-        self.mapmin = Button(self.frame1, width=3, text='-', command=lambda : self.mapzoomchange(1))
-        self.mapmin.place(x=1100, y=630)
-
-        self.maproad = Button(self.frame1, width=3, text='일반', command=lambda : self.maptypechange(0))
-        self.maproad.place(x=1100, y=660)
-
-        self.maphybrid = Button(self.frame1, width=3, text='위성', command=lambda : self.maptypechange(1))
-        self.maphybrid.place(x=1100, y=690)
+        self.createLabel(self.window)
 
         self.frame2 = tkinter.Frame(self.window)
         self.notebook.add(self.frame2, text="북마크")
 
         self.label2 = tkinter.Label(self.frame2, text="페이지 2의 내용")
         self.label2.pack()
+
+        self.bookmarkbox = Listbox(self.frame2,selectmode = 'single',width=100, height = 30)
+        self.bookmarkbox.place(x=0,y=100)
+        self.bookmarkbox.bind("<<ListboxSelect>>", self.selectlist2)
 
         self.frame3 = tkinter.Frame(self.window)
         self.notebook.add(self.frame3, text="추가 기능")
