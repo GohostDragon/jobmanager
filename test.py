@@ -20,6 +20,12 @@ from PIL import Image,ImageTk
 import io
 import math
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+
 STRX = 750
 STRY = 30
 STRD = 30
@@ -148,6 +154,12 @@ class JobsTk:
         for i in range(len(self.bookmarklist)):
             self.bookmarkbox.insert(END, self.bookmarklist[i].pirntstrJobs())
 
+    def deletebookmark(self):
+        del self.bookmarklist[self.sindex]
+        self.bookmarkbox.delete(0, END)
+        for i in range(len(self.bookmarklist)):
+            self.bookmarkbox.insert(END, self.bookmarklist[i].pirntstrJobs())
+
     def mapzoomchange(self,type):
         if type == 0:
             self.mapzoom += 1
@@ -199,36 +211,36 @@ class JobsTk:
         self.jobs[index].addcwanted(jobsNm,wantedTitle,receiptCloseDt,empTpNm,salTpNm,enterTpNm,eduNm,certificate,compAbl,selMthd,rcptMthd,submitDoc,workdayWorkhrCont,jobCont)
 
     def createLabel(self, lframe):
-        self.title = Label(lframe, text="업무 : ", font=self.TempFont)
+        self.title = Label(lframe, text="업무 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.title.place(x=STRX, y=STRY)
 
-        self.jobCont = Label(lframe, text="", font=self.TempFont)
+        self.jobCont = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT)
         self.jobCont.place(x=STRX, y=STRY + STRD)
 
-        self.salTpNm = Label(lframe, text="", font=self.TempFont)
+        self.salTpNm = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT)
         self.salTpNm.place(x=STRX, y=STRY + STRD * 2)
-        self.holidayTpNm = Label(lframe, text="근무형태 : ", font=self.TempFont)
+        self.holidayTpNm = Label(lframe, text="근무형태 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.holidayTpNm.place(x=STRX, y=STRY + STRD * 3)
 
-        self.regionstr = Label(lframe, text="지역 : ", font=self.TempFont)
+        self.regionstr = Label(lframe, text="지역 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.regionstr.place(x=STRX, y=STRY + STRD * 5)
-        self.certificate = Label(lframe, text="자격증 : ", font=self.TempFont)
+        self.certificate = Label(lframe, text="자격증 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.certificate.place(x=STRX, y=STRY + STRD * 6)
-        self.minEdubg = Label(lframe, text="학력 : ", font=self.TempFont)
+        self.minEdubg = Label(lframe, text="학력 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.minEdubg.place(x=STRX, y=STRY + STRD * 7)
-        self.career = Label(lframe, text="경력 : ", font=self.TempFont)
+        self.career = Label(lframe, text="경력 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.career.place(x=STRX, y=STRY + STRD * 8)
-        self.regDt = Label(lframe, text="채용기간 : ", font=self.TempFont)
+        self.regDt = Label(lframe, text="채용기간 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.regDt.place(x=STRX, y=STRY + STRD * 9)
-        self.rcptMthd = Label(lframe, text="접수 방법 : ", font=self.TempFont)
+        self.rcptMthd = Label(lframe, text="접수 방법 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.rcptMthd.place(x=STRX, y=STRY + STRD * 10)
-        self.company = Label(text="회사명 : ", font=self.TempFont)
+        self.company = Label(text="회사명 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.company.place(x=STRX, y=STRY + STRD * 11)
-        self.reperNm = Label(lframe, text="대표 : ", font=self.TempFont)
+        self.reperNm = Label(lframe, text="대표 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.reperNm.place(x=STRX, y=STRY + STRD * 12)
-        self.indTpCdNm = Label(lframe, text="업종 : ", font=self.TempFont)
+        self.indTpCdNm = Label(lframe, text="업종 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.indTpCdNm.place(x=STRX, y=STRY + STRD * 13)
-        self.busiCont = Label(lframe, text="주된 업종 : ", font=self.TempFont)
+        self.busiCont = Label(lframe, text="주된 업종 : ", font=self.TempFont,anchor="w",justify=LEFT)
         self.busiCont.place(x=STRX, y=STRY + STRD * 14)
 
         self.mapplus = Button(lframe, width=3, text='+', command=lambda: self.mapzoomchange(0))
@@ -291,6 +303,58 @@ class JobsTk:
 
         self.printLabel()
 
+    def strJobinfo(self,index):
+        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo=' +self.tempList[index].wantedAuthNo + '&infoSvc=VALIDATION')
+        self.coplist(text, index)
+        wdstr = (str)(self.tempList[index].workdayWorkhrCont)
+        self.tempList[index].workdayWorkhrCont = wdstr.strip()
+        resultstr = (self.tempList[index].wantedTitle+'\n'\
+        +self.tempList[index].jobCont+'\n'
+        +self.tempList[index].salTpNm+'\n'
+        +self.tempList[index].workdayWorkhrCont + '\n'
+        +"주소 : " + self.tempList[index].corpAddr+'\n'
+        +"자격증 : " + self.tempList[index].certificate + '\n'
+        +"학력 : " + self.tempList[index].minEdubg+'\n'
+        +"경력 : " + self.tempList[index].career+'\n'
+        +"채용기간 : " + self.tempList[index].regDt + "~" + self.tempList[index].closeDt+'\n'
+        +"접수 방법 : " + self.tempList[index].rcptMthd+'\n'
+        +"회사명 : " + self.tempList[index].corpName + '\n'
+        +"대표 : " + self.tempList[index].reperNm+'\n'
+        +"업종 : " + self.tempList[index].indTpCdNm+'\n'
+        +"주된 업종 : " + self.tempList[index].busiCont+'\n'
+        +"=============================================="+'\n')
+        return resultstr
+
+    def sendmail(self):
+        # 지메일 아이디,비번 입력하기
+        email_user = Entry.get(self.eidentry)+'@gmail.com'  # <ID> 본인 계정 아이디 입력
+        email_password = Entry.get(self.epwentry)  # <PASSWORD> 본인 계정 암호 입력
+        email_send = email_user  # <받는곳주소> 수신자 이메일 abc@abc.com 형태로 입력
+
+        # 제목 입력
+        subject = '직업정보 목록입니다. '
+
+        msg = MIMEMultipart()
+        msg['From'] = email_user
+        msg['To'] = email_send
+        msg['Subject'] = subject
+        body = ''
+        # 본문 내용 입력
+        self.tempList = []
+        for i in range(len(self.bookmarklist)):
+            self.tempList.append(self.bookmarklist[i])
+        for i in range(len(self.bookmarklist)):
+            body += self.strJobinfo(i)
+        msg.attach(MIMEText(body, 'plain'))
+
+        text = msg.as_string()
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(email_user, email_password)
+
+        server.sendmail(email_user, email_send, text)
+        server.quit()
+
     def __init__(self):
         self.window = Tk()
         self.window.title("텀프로젝트")
@@ -341,7 +405,7 @@ class JobsTk:
         self.btn.grid(column=3, row=0)
 
         self.listbox = Listbox(self.frame1,selectmode = 'single',width=100, height = 30)
-        self.listbox.place(x=0,y=100)
+        self.listbox.place(x=10,y=100)
 
         self.listbox.bind("<<ListboxSelect>>", self.selectlist)
 
@@ -362,12 +426,26 @@ class JobsTk:
         self.frame2 = tkinter.Frame(self.window)
         self.notebook.add(self.frame2, text="북마크")
 
-        self.label2 = tkinter.Label(self.frame2, text="페이지 2의 내용")
-        self.label2.pack()
 
-        self.bookmarkbox = Listbox(self.frame2,selectmode = 'single',width=100, height = 30)
-        self.bookmarkbox.place(x=0,y=100)
+
+        self.bookmarkbox = Listbox(self.frame2,selectmode = 'single',width=100, height = 15)
+        self.bookmarkbox.place(x=10,y=100)
         self.bookmarkbox.bind("<<ListboxSelect>>", self.selectlist2)
+
+        self.bookmarkb = Button(self.frame2, width=10, text='북마크제거', command=self.deletebookmark)
+        self.bookmarkb.place(x=630, y=350)
+
+        self.eidL = tkinter.Label(self.frame2, text="구글 아이디")
+        self.eidL.place(x=10, y=380)
+        self.eidentry = Entry(self.frame2,width=20)
+        self.eidentry.place(x=100, y=380)
+
+        self.epwL = tkinter.Label(self.frame2, text="구글 비밀번호")
+        self.epwL.place(x=350, y=380)
+        self.epwentry = Entry(self.frame2,width=20,show="*")
+        self.epwentry.place(x=450, y=380)
+        self.bmail = Button(self.frame2, width=10, text='메일보내기', command=self.sendmail)
+        self.bmail.place(x=630, y=380)
 
         self.frame3 = tkinter.Frame(self.window)
         self.notebook.add(self.frame3, text="추가 기능")
