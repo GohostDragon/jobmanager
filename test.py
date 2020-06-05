@@ -26,6 +26,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 
+import telepot
+
 STRX = 750
 STRY = 30
 STRD = 30
@@ -355,6 +357,48 @@ class JobsTk:
         server.sendmail(email_user, email_send, text)
         server.quit()
 
+    def telerstr(self,regionstr,i):
+
+        rstr = "&region=" + regionstr
+
+        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=L&returnType=XML&startPage=1&display='+str(i) + rstr)
+        rjobs = extractXmlData(text)
+
+        return rjobs.TeleprintJobs()
+
+    def telekstr(self, kstr):
+
+        tstr = urllib.parse.quote(kstr)
+        rstr = '&keyword='+tstr
+        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=L&returnType=XML&startPage=1&display=10' + rstr)
+        print(text)
+        rjobs = extractXmlData(text)
+
+        return rjobs
+
+    def handler_telegrame(self,msg):
+        content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
+        if content_type == 'text':
+            str_message = msg['text']
+            if str_message[0:1] == '/':
+                args = str_message.split(" ")
+                command = args[0]
+                del args[0]
+
+                if command == '/안녕':
+                    self.bot.sendMessage(chat_id,"안녕하세요")
+                elif command == '/검색':
+                    w = " ".join(args)
+                    teljobs = self.telekstr(w)
+                    for i in range(10):
+                        self.bot.sendMessage(chat_id,teljobs[i].TeleprintJobs())
+
+
+
+    def start_telegramid(self):
+        self.bot = telepot.Bot('1182268570:AAF5jJLOx3t-EBUS2hB1Jqz7WJm2cfyyGwM')
+        self.bot.message_loop(self.handler_telegrame)
+
     def __init__(self):
         self.window = Tk()
         self.window.title("텀프로젝트")
@@ -453,6 +497,6 @@ class JobsTk:
         self.label3 = tkinter.Label(self.frame3, text="페이지 4의 내용")
         self.label3.pack()
 
-
+        self.start_telegramid()
         self.window.mainloop()
 JobsTk()

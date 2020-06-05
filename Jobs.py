@@ -57,3 +57,17 @@ class Jobs:
 
     def pirntstrJobs(self):
         return "["+str(self.region)+"]"+str(self.company)+" "+str(self.salTpNm)+" "+str(self.sal)
+
+    def TeleprintJobs(self):
+        rstr = ("회사명:"+self.company+'\n'
+        +"업무:"+ self.title+'\n'
+        +self.salTpNm+":"+self.sal+'\n'
+        +"최저연봉:"+ self.minSal+'\n'
+        +"최대연봉:"+ self.maxSal+'\n'
+        +"지역:"+ self.region+'\n'
+        +"근무형태:"+ self.holidayTpNm+'\n'
+        +"학력:"+ self.minEdubg+'\n'
+        +"경력:"+ self.career+'\n'
+        +"등록일시:"+ self.regDt+'\n'
+        +'마감일시:'+ self.closeDt+'\n')
+        return rstr
