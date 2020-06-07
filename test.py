@@ -32,6 +32,7 @@ STRX = 750
 STRY = 30
 STRD = 30
 TOTAL = 0
+
 def extractXmlData(strXml): #채용정보 파싱
     tree = ElementTree.fromstring(strXml)
     jobs = []
@@ -66,6 +67,21 @@ def extractXmlRegionData(strXml): #지역 파싱
 
         regions.append(Region(regionCd,regionNm))
     return regions
+def extractXmlSupportData(strXml):
+    tree = ElementTree.fromstring(strXml)
+    support = []
+    for wanted in tree.findall('jynEmpSptList'):
+        busiNm = wanted.find('busiNm').text
+        dtlBusiNm = wanted.find('dtlBusiNm').text
+        busiSum = wanted.find('busiSum').text
+        chargerOrgNm = wanted.find('chargerOrgNm').text
+        busiTpCd = wanted.find('busiTpCd').text
+        ageEtcCont = wanted.find('ageEtcCont').text
+        edubgEtcCont = wanted.find('edubgEtcCont').text
+        empEtcCont = wanted.find('empEtcCont').text
+        relInfoUrl = wanted.find('relInfoUrl').text
+        support.append(Support(busiNm,dtlBusiNm,busiSum,chargerOrgNm,busiTpCd,ageEtcCont,edubgEtcCont,empEtcCont,relInfoUrl))
+    return support
 
 def request(url):
     """지정한 url의 웹 문서를 요청하여, 본문을 반환한다."""
@@ -305,6 +321,60 @@ class JobsTk:
 
         self.printLabel()
 
+    def supportsearch(self):#검색 결과
+
+        text = request('http://openapi.work.go.kr/opi/opi/opia/jynEmpSptListAPI.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&returnType=xml&busiTpcd=PLCYTP01&chargerClcd=G&startPage=1+&display=20')
+        self.supports = extractXmlSupportData(text)
+
+        self.supportbox.delete(0, END)
+        for i in range(len(self.supports)):
+            self.supportbox.insert(END, self.supports[i].pirntstrSupport())
+
+    def printSupport(self):
+        self.title.configure(text=self.tempList[self.sindex].busiNm)
+        self.jobCont.configure(text='담당기관 : '+self.tempList[self.sindex].chargerOrgNm)
+        self.salTpNm.configure(text=self.tempList[self.sindex].dtlBusiNm)
+
+        tstr = (str)(self.tempList[self.sindex].busiSum)
+        astr = tstr[:45]
+        cstr = ""
+        if len(tstr) > 90:
+            bstr = tstr[45:90]
+            cstr = tstr[90:]
+        else:
+            bstr = tstr[45:]
+            cstr = tstr[90:]
+        self.tempList[self.sindex].busiSum = astr + '\n' + bstr + '\n' + cstr
+        self.holidayTpNm.configure(text=self.tempList[self.sindex].busiSum)
+
+        self.regionstr.configure(text=self.tempList[self.sindex].busiTpCd)
+        self.certificate.configure(text="연령 : " + self.tempList[self.sindex].ageEtcCont)
+        self.minEdubg.configure(text="학력 : " + self.tempList[self.sindex].edubgEtcCont)
+        self.career.configure(text="취업상태 : " + self.tempList[self.sindex].empEtcCont)
+        self.regDt.configure(text="주소 : " + self.tempList[self.sindex].relInfoUrl)
+        self.rcptMthd.configure(text="")
+        self.company.configure(text="")
+        self.reperNm.configure(text="")
+        self.indTpCdNm.configure(text="")
+        self.busiCont.configure(text="")
+
+        '''
+        wdstr = (str)(self.tempList[self.sindex].jobCont)
+        adstr = wdstr.strip()
+        self.tempList[self.sindex].jobCont = adstr[:100]
+        self.indTpCdNm.configure(text="")
+        self.busiCont.configure(text="")
+        '''
+    def selectlist3(self,event):#리스트 목록 선택할때 정보 보여주기
+        index = self.supportbox.curselection()[0]
+        self.sindex = index
+
+        self.tempList = []
+        for i in range(len(self.supports)):
+            self.tempList.append(self.supports[i])
+
+        self.printSupport()
+
     def strJobinfo(self,index):
         text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo=' +self.tempList[index].wantedAuthNo + '&infoSvc=VALIDATION')
         self.coplist(text, index)
@@ -492,10 +562,17 @@ class JobsTk:
         self.bmail.place(x=630, y=380)
 
         self.frame3 = tkinter.Frame(self.window)
-        self.notebook.add(self.frame3, text="추가 기능")
+        self.notebook.add(self.frame3, text="청년 취업 정보")
 
         self.label3 = tkinter.Label(self.frame3, text="페이지 4의 내용")
         self.label3.pack()
+
+        self.sbtn = Button(self.frame3, width=10, text='검색', command=self.supportsearch)
+        self.sbtn.place(x=100,y=50)
+
+        self.supportbox = Listbox(self.frame3,selectmode = 'single',width=100, height = 15)
+        self.supportbox.place(x=10,y=100)
+        self.supportbox.bind("<<ListboxSelect>>", self.selectlist3)
 
         self.start_telegramid()
         self.window.mainloop()
