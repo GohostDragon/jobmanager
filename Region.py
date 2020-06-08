@@ -17,3 +17,15 @@ class Support:
 
     def pirntstrSupport(self):
         return str(self.busiNm)
+
+    def TeleprintSupport(self):
+        rstr = (self.busiNm + '\n'
+        +'담당기관 : ' + self.chargerOrgNm
+        +self.dtlBusiNm+'\n'
+        +self.busiSum+'\n'
+        +self.busiTpCd+'\n'
+        +"연령 : " + self.ageEtcCont+'\n'
+        +"학력 : " + self.edubgEtcCont+'\n'
+        +"취업상태 : " + self.empEtcCont+'\n'
+        +"주소 : " + self.relInfoUrl+'\n')
+        return rstr

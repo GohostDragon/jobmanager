@@ -27,6 +27,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 import telepot
+import webbrowser
 
 STRX = 750
 STRY = 30
@@ -374,6 +375,8 @@ class JobsTk:
             self.tempList.append(self.supports[i])
 
         self.printSupport()
+    def openweb(self):
+        webbrowser.open_new(str(self.supports[self.sindex].relInfoUrl))
 
     def strJobinfo(self,index):
         text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo=' +self.tempList[index].wantedAuthNo + '&infoSvc=VALIDATION')
@@ -427,14 +430,14 @@ class JobsTk:
         server.sendmail(email_user, email_send, text)
         server.quit()
 
-    def telerstr(self,regionstr,i):
+    def telerstr(self,regionstr):
 
-        rstr = "&region=" + regionstr
+        rstr = "&region=" + str(regionstr)
 
-        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=L&returnType=XML&startPage=1&display='+str(i) + rstr)
+        text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=L&returnType=XML&startPage=1&display=10' + rstr)
         rjobs = extractXmlData(text)
 
-        return rjobs.TeleprintJobs()
+        return rjobs
 
     def telekstr(self, kstr):
 
@@ -445,6 +448,13 @@ class JobsTk:
         rjobs = extractXmlData(text)
 
         return rjobs
+
+    def teleSupport(self):
+
+        text = request('http://openapi.work.go.kr/opi/opi/opia/jynEmpSptListAPI.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&returnType=xml&busiTpcd=PLCYTP01&chargerClcd=G&startPage=1+&display=20')
+        rsupports = extractXmlSupportData(text)
+
+        return rsupports
 
     def handler_telegrame(self,msg):
         content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
@@ -460,8 +470,53 @@ class JobsTk:
                 elif command == '/검색':
                     w = " ".join(args)
                     teljobs = self.telekstr(w)
-                    for i in range(10):
+                    for i in range(len(teljobs)):
                         self.bot.sendMessage(chat_id,teljobs[i].TeleprintJobs())
+                elif command == '/지역':
+                    w = " ".join(args)
+                    cd = 0
+                    if w == '서울':
+                        cd = 11000
+                    elif w == '인천':
+                        cd = 28000
+                    elif w == '부산':
+                        cd = 26000
+                    elif w == '경기':
+                        cd = 41000
+                    elif w == '대구':
+                        cd = 27000
+                    elif w == '광주':
+                        cd = 29000
+                    elif w == '대전':
+                        cd = 30000
+                    elif w == '울산':
+                        cd = 31000
+                    elif w == '세종':
+                        cd = 36110
+                    elif w == '강원':
+                        cd = 42000
+                    elif w == '충북':
+                        cd = 43000
+                    elif w == '충남':
+                        cd = 44000
+                    elif w == '전북':
+                        cd = 45000
+                    elif w == '전남':
+                        cd = 46000
+                    elif w == '경북':
+                        cd = 47000
+                    elif w == '경남':
+                        cd = 48000
+                    elif w == '제주':
+                        cd = 50000
+                    teljobs = self.telerstr(cd)
+                    for i in range(len(teljobs)):
+                        self.bot.sendMessage(chat_id,teljobs[i].TeleprintJobs())
+
+                elif command == '/지원정보':
+                    telSupports = self.teleSupport()
+                    for i in range(len(telSupports)):
+                        self.bot.sendMessage(chat_id,telSupports[i].TeleprintSupport())
 
 
 
@@ -568,7 +623,10 @@ class JobsTk:
         self.label3.pack()
 
         self.sbtn = Button(self.frame3, width=10, text='검색', command=self.supportsearch)
-        self.sbtn.place(x=100,y=50)
+        self.sbtn.place(x=600,y=50)
+
+        self.webbtn = Button(self.frame3, width=10, text='열기', command=self.openweb)
+        self.webbtn.place(x=600,y=400)
 
         self.supportbox = Listbox(self.frame3,selectmode = 'single',width=100, height = 15)
         self.supportbox.place(x=10,y=100)
