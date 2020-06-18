@@ -29,11 +29,17 @@ from email import encoders
 import telepot
 import webbrowser
 
+import matplotlib.pyplot as plt
+
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
 STRX = 750
 STRY = 30
 STRD = 30
 TOTAL = 0
-
+BACKGROUNDCOLOR = '#2d2c34'
+FONTCOLOR = 'white'
 def extractXmlData(strXml): #채용정보 파싱
     tree = ElementTree.fromstring(strXml)
     jobs = []
@@ -155,29 +161,89 @@ class JobsTk:
         else:
             tstr = '&maptype=hybrid'
 
-        url = url + "center=" + center + "&zoom=" + str(self.mapzoom) + "&size=300x300"+'&markers=size:middle%7Ccolor:green%7C'+ center +tstr+ "&key="+api_key+"&sensor=true"
+        url = url + "center=" + center + "&zoom=" + str(self.mapzoom) + "&size=280x500"+'&markers=size:middle%7Ccolor:green%7C'+ center +tstr+ "&key="+api_key+"&sensor=true"
         #print(url)
         response = requests.get(url)
         img_data = response.content
         img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
 
-        label = Label(self.window, image=img, height=300, width=300)
+        label = Label(self.window, image=img, height=250, width=500)
         label.place(x=STRX, y=STRY + STRD * 15)
 
-        self.mapimage = Label(self.window,image=photo,height=400,width=400)
+        self.mapimage = Label(self.window,image=photo,height=300,width=500)
+
+
+    def showpiegraph(self):
+        beernum = []
+        price = []
+        for i in range(len(self.bookmarklist)):
+            beernum.append(i)
+            saltmp = 0
+            saltt = int(self.bookmarklist[i].minSal)
+            if saltt > 10000000:
+                saltmp = (saltt//12)//209
+            elif 10000000>saltt > 1000000:
+                saltmp = saltt//209
+            else:
+                saltmp = saltt
+            price.append(saltmp)
+
+        fig = plt.figure()
+        plt.pie(price,labels=beernum,shadow=True,autopct='%1.1f%%')
+        '''
+        plt.pie(price,
+                labels=beernum,
+                colors=['r', 'm', 'b', 'c', 'k'],
+                startangle=90,
+                shadow=True,
+                explode=(0, 0.1, 0, 0, 0),
+                autopct='%1.1f%%')
+        '''
+        fig.set_size_inches(7.0, 3.6, forward=True)
+        self.cgraph = FigureCanvasTkAgg(fig, master=self.frame2)
+        self.cgraph.get_tk_widget().place(x=10, y=410)
+
+    def showstickgraph(self):
+        fig = plt.figure()
+
+        beernum = []
+        price = []
+        for i in range(len(self.bookmarklist)):
+            beernum.append(i)
+            saltmp = 0
+            saltt = int(self.bookmarklist[i].minSal)
+            if saltt > 10000000:
+                saltmp = (saltt//12)//209
+            elif 10000000>saltt > 1000000:
+                saltmp = saltt//209
+            else:
+                saltmp = saltt
+            price.append(saltmp)
+
+        days_in_year = [88, 82, 36, 68, 43, 10, 30, 60, 90]
+        plt.bar(range(len(price)), price)
+        ax = plt.subplot()
+        ax.set_xlabel('company')
+        ax.set_ylabel('money')
+        ax.set_xticks(beernum)
+        ax.set_xticklabels(beernum,rotation=30)
+
+        fig.set_size_inches(7.0, 3.6, forward=True)
+        self.cgraph = FigureCanvasTkAgg(fig, master=self.frame2)
+        self.cgraph.get_tk_widget().place(x=10, y=410)
 
     def addbookmark(self):
 
         self.bookmarklist.append(self.jobs[self.sindex])
         self.bookmarkbox.delete(0, END)
         for i in range(len(self.bookmarklist)):
-            self.bookmarkbox.insert(END, self.bookmarklist[i].pirntstrJobs())
+            self.bookmarkbox.insert(END,'['+str(i)+']'+ self.bookmarklist[i].pirntstrJobs())
 
     def deletebookmark(self):
         del self.bookmarklist[self.sindex]
         self.bookmarkbox.delete(0, END)
         for i in range(len(self.bookmarklist)):
-            self.bookmarkbox.insert(END, self.bookmarklist[i].pirntstrJobs())
+            self.bookmarkbox.insert(END,'['+str(i)+']'+ self.bookmarklist[i].pirntstrJobs())
 
     def mapzoomchange(self,type):
         if type == 0:
@@ -230,49 +296,49 @@ class JobsTk:
         self.jobs[index].addcwanted(jobsNm,wantedTitle,receiptCloseDt,empTpNm,salTpNm,enterTpNm,eduNm,certificate,compAbl,selMthd,rcptMthd,submitDoc,workdayWorkhrCont,jobCont)
 
     def createLabel(self, lframe):
-        self.title = Label(lframe, text="업무 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.title = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"업무 : "
         self.title.place(x=STRX, y=STRY)
 
-        self.jobCont = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT)
+        self.jobCont = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#""
         self.jobCont.place(x=STRX, y=STRY + STRD)
 
-        self.salTpNm = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT)
+        self.salTpNm = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#""
         self.salTpNm.place(x=STRX, y=STRY + STRD * 2)
-        self.holidayTpNm = Label(lframe, text="근무형태 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.holidayTpNm = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"근무형태 : "
         self.holidayTpNm.place(x=STRX, y=STRY + STRD * 3)
 
-        self.regionstr = Label(lframe, text="지역 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.regionstr = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"지역 : "
         self.regionstr.place(x=STRX, y=STRY + STRD * 5)
-        self.certificate = Label(lframe, text="자격증 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.certificate = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"자격증 : "
         self.certificate.place(x=STRX, y=STRY + STRD * 6)
-        self.minEdubg = Label(lframe, text="학력 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.minEdubg = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"학력 : "
         self.minEdubg.place(x=STRX, y=STRY + STRD * 7)
-        self.career = Label(lframe, text="경력 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.career = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"경력 : "
         self.career.place(x=STRX, y=STRY + STRD * 8)
-        self.regDt = Label(lframe, text="채용기간 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.regDt = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"채용기간 : "
         self.regDt.place(x=STRX, y=STRY + STRD * 9)
-        self.rcptMthd = Label(lframe, text="접수 방법 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.rcptMthd = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"접수 방법 : "
         self.rcptMthd.place(x=STRX, y=STRY + STRD * 10)
-        self.company = Label(text="회사명 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.company = Label(text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"회사명 : "
         self.company.place(x=STRX, y=STRY + STRD * 11)
-        self.reperNm = Label(lframe, text="대표 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.reperNm = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"대표 : "
         self.reperNm.place(x=STRX, y=STRY + STRD * 12)
-        self.indTpCdNm = Label(lframe, text="업종 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.indTpCdNm = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"업종 : "
         self.indTpCdNm.place(x=STRX, y=STRY + STRD * 13)
-        self.busiCont = Label(lframe, text="주된 업종 : ", font=self.TempFont,anchor="w",justify=LEFT)
+        self.busiCont = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"주된 업종 : "
         self.busiCont.place(x=STRX, y=STRY + STRD * 14)
 
-        self.mapplus = Button(lframe, width=3, text='+', command=lambda: self.mapzoomchange(0))
-        self.mapplus.place(x=1100, y=600)
+        self.mapplus = Button(lframe, width=5, text='확대',font=self.TempFont, command=lambda: self.mapzoomchange(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.mapplus.place(x=800, y=750)
 
-        self.mapmin = Button(lframe, width=3, text='-', command=lambda: self.mapzoomchange(1))
-        self.mapmin.place(x=1100, y=630)
+        self.mapmin = Button(lframe, width=5, text='축소',font=self.TempFont, command=lambda: self.mapzoomchange(1),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.mapmin.place(x=900, y=750)
 
-        self.maproad = Button(lframe, width=3, text='일반', command=lambda: self.maptypechange(0))
-        self.maproad.place(x=1100, y=660)
+        self.maproad = Button(lframe, width=5, text='일반',font=self.TempFont, command=lambda: self.maptypechange(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.maproad.place(x=1000, y=750)
 
-        self.maphybrid = Button(lframe, width=3, text='위성', command=lambda: self.maptypechange(1))
-        self.maphybrid.place(x=1100, y=690)
+        self.maphybrid = Button(lframe, width=5, text='위성',font=self.TempFont, command=lambda: self.maptypechange(1),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.maphybrid.place(x=1100, y=750)
 
     def printLabel(self):
         # self.jobs[index].pintJobs()
@@ -530,6 +596,8 @@ class JobsTk:
         self.window.geometry("1280x800")
         self.window.resizable(False,False)
 
+        self.window.configure(background=BACKGROUNDCOLOR)
+
         self.TempFont = font.Font(size=10, weight='bold', family='Consolas')
 
         self.bookmarklist = []
@@ -537,14 +605,39 @@ class JobsTk:
         self.mapzoom = 18
         self.maptype = 0
 
-        self.notebook = tkinter.ttk.Notebook(self.window,width = 730, height = 800)
+        noteStyler = ttk.Style()
+        noteStyler.element_create('Plain.Notebook.tab', "from", 'default')
+        # Redefine the TNotebook Tab layout to use the new element
+
+        noteStyler.layout("TNotebook.Tab",
+                          [('Plain.Notebook.tab', {'children':
+                                                       [('Notebook.padding', {'side': 'top', 'children':
+                                                           [('Notebook.focus', {'side': 'top', 'children':
+                                                               [('Notebook.label', {'side': 'top', 'sticky': ''})],
+                                                                                'sticky': 'nswe'})],
+                                                                              'sticky': 'nswe'})],
+                                                   'sticky': 'nswe'})])
+
+        noteStyler.configure("TNotebook", background='black', borderwidth=0)
+        noteStyler.configure("TNotebook.Tab", background=BACKGROUNDCOLOR, foreground=BACKGROUNDCOLOR, lightcolor=BACKGROUNDCOLOR, borderwidth=0,tabbackground='dark',backdrop='dark')
+        noteStyler.configure("TFrame", background='black', foreground='white', borderwidth=0)
+
+
+        self.notebook = tkinter.ttk.Notebook(self.window,width = 730, height = 800,style='TNotebook.Tab')
         self.notebook.place(x=0,y=0)
 
-        self.frame1 = tkinter.Frame(self.window)
+        self.frame1 = tkinter.Frame(self.window,background=BACKGROUNDCOLOR)
         self.notebook.add(self.frame1, text='채용 검색')
 
-        self.lrsearh = Label(self.frame1,text="근무 희망 지역 ",font=self.TempFont)
-        self.lrsearh.grid(column = 0 , row = 0)
+        self.ldescrpit = Label(self.frame1, text="희망하는 근무 지역과 키워드 검색을 통해 원하는 일자리를 찾을 수 있습니다. ", font=self.TempFont, bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.ldescrpit.place(x=10, y=10)
+
+        self.ldescrpit2 = Label(self.frame1, text="검색결과 리스트 ", font=self.TempFont,
+                               bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.ldescrpit2.place(x=10, y=160)
+
+        self.lrsearh = Label(self.frame1,text="근무 희망 지역 ",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.lrsearh.place(x=10, y=70)
 
         self.text = request('http://openapi.work.go.kr/opi/commonCode/commonCode.do?returnType=XML&target=CMCD&authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&dtlGb=1')
         self.region = extractXmlRegionData(self.text)
@@ -552,71 +645,73 @@ class JobsTk:
         for i in self.region:
             comboregion.append(i.regionNm)
         self.combo = ttk.Combobox(self.frame1, width=20, textvariable=str ,values=comboregion)
-        self.combo.grid(column = 1 , row = 0)
+        self.combo.place(x=120, y=70)
         self.combo.current(0)
 
         self.combo2 = ttk.Combobox(self.frame1, width=20, textvariable=str,values='전체')
-        self.combo2.grid(column = 2 , row = 0)
+        self.combo2.place(x=320, y=70)
         self.combo2.current(0)
 
         self.combo.bind("<<ComboboxSelected>>", self.callbackFunc)
 
-        self.ljsearh = Label(self.frame1,text="희망 직종 ")
-        self.ljsearh.grid(column = 0 , row = 1)
+        self.lksearh = Label(self.frame1,text="키워드 ",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.lksearh.place(x=40, y=110)
 
-        self.lksearh = Label(self.frame1,text="키워드 ",font=self.TempFont)
-        self.lksearh.grid(column = 0 , row = 2)
+        self.kentry = Entry(self.frame1,width=30)
+        self.kentry.place(x=120, y=110)
 
-        self.kentry = Entry(self.frame1,width=20)
-        self.kentry.grid(column=1, row=2)
-
-        self.btn = Button(self.frame1, width=10, text='검색', command=lambda : self.rsearch(0))
-        self.btn.grid(column=3, row=0)
+        self.btn = Button(self.frame1, width=10, text='검색', command=lambda : self.rsearch(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.btn.place(x=500, y=70)
 
         self.listbox = Listbox(self.frame1,selectmode = 'single',width=100, height = 30)
-        self.listbox.place(x=10,y=100)
+        self.listbox.place(x=10,y=190)
 
         self.listbox.bind("<<ListboxSelect>>", self.selectlist)
 
-        self.lpage = Label(text="[ 0 / 0 ]")
-        self.lpage.place(x=300, y=620)
+        self.lpage = Label(text="[ 0 / 0 ]",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.lpage.place(x=300, y=720)
 
-        self.bright = Button(self.frame1, width=3, text='>', command=lambda : self.rsearch(1))
-        self.bright.place(x=350, y=595)
+        self.bright = Button(self.frame1, width=3, text='>', command=lambda : self.rsearch(1),font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bright.place(x=450, y=695)
 
-        self.bleft = Button(self.frame1, width=3, text='<', command=lambda : self.rsearch(2))
-        self.bleft.place(x=250, y=595)
+        self.bleft = Button(self.frame1, width=3, text='<', command=lambda : self.rsearch(2),font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bleft.place(x=200, y=695)
 
-        self.bookmarkb = Button(self.frame1, width=5, text='북마크', command=self.addbookmark)
-        self.bookmarkb.place(x=660, y=590)
+        self.bookmarkb = Button(self.frame1, width=8, text='북마크', command=self.addbookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bookmarkb.place(x=650, y=700)
 
         self.createLabel(self.window)
 
-        self.frame2 = tkinter.Frame(self.window)
+        self.frame2 = tkinter.Frame(self.window,background=BACKGROUNDCOLOR)
         self.notebook.add(self.frame2, text="북마크")
 
 
 
         self.bookmarkbox = Listbox(self.frame2,selectmode = 'single',width=100, height = 15)
-        self.bookmarkbox.place(x=10,y=100)
+        self.bookmarkbox.place(x=10,y=50)
         self.bookmarkbox.bind("<<ListboxSelect>>", self.selectlist2)
 
-        self.bookmarkb = Button(self.frame2, width=10, text='북마크제거', command=self.deletebookmark)
-        self.bookmarkb.place(x=630, y=350)
+        self.bookmarkb = Button(self.frame2, width=10, text='북마크제거', command=self.deletebookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bookmarkb.place(x=630, y=300)
 
-        self.eidL = tkinter.Label(self.frame2, text="구글 아이디")
-        self.eidL.place(x=10, y=380)
+        self.eidL = tkinter.Label(self.frame2, text="구글 아이디",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.eidL.place(x=10, y=330)
         self.eidentry = Entry(self.frame2,width=20)
-        self.eidentry.place(x=100, y=380)
+        self.eidentry.place(x=100, y=330)
 
-        self.epwL = tkinter.Label(self.frame2, text="구글 비밀번호")
-        self.epwL.place(x=350, y=380)
+        self.epwL = tkinter.Label(self.frame2, text="구글 비밀번호",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.epwL.place(x=350, y=330)
         self.epwentry = Entry(self.frame2,width=20,show="*")
-        self.epwentry.place(x=450, y=380)
-        self.bmail = Button(self.frame2, width=10, text='메일보내기', command=self.sendmail)
-        self.bmail.place(x=630, y=380)
+        self.epwentry.place(x=450, y=330)
+        self.bmail = Button(self.frame2, width=10, text='메일보내기', command=self.sendmail,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bmail.place(x=630, y=330)
 
-        self.frame3 = tkinter.Frame(self.window)
+        self.bcirclegraph = Button(self.frame2, width=10, text='원그래프', command=self.showpiegraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bcirclegraph.place(x=10, y=370)
+        self.bstickgraph = Button(self.frame2, width=10, text='막대그래프', command=self.showstickgraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bstickgraph.place(x=350, y=370)
+
+        self.frame3 = tkinter.Frame(self.window,background=BACKGROUNDCOLOR)
         self.notebook.add(self.frame3, text="청년 취업 정보")
 
         self.label3 = tkinter.Label(self.frame3, text="페이지 4의 내용")
