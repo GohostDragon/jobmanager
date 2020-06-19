@@ -14,6 +14,7 @@ class Jobs:
         self.regDt = regDt
         self.closeDt = closeDt
         self.wantedInfoUrl = wantedInfoUrl
+        self.bookmarkactive = False
 
     def addcorp(self,corpNm,reperNm,totPsncnt,indTpCdNm,busiCont,corpAddr,busiSize):
         self.corpName = corpNm

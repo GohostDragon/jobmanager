@@ -34,6 +34,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
+import job#c/c++ 연동
+
 STRX = 750
 STRY = 30
 STRD = 30
@@ -147,7 +149,7 @@ class JobsTk:
         self.jobs = extractXmlData(text)
 
         self.listbox.delete(0, END)
-        for i in range(30):
+        for i in range(len(self.jobs)):
             self.listbox.insert(END, self.jobs[i].pirntstrJobs())
 
         self.lpage.configure(text="[" + str(self.page)+'/'+str(max_page)+"]")
@@ -178,15 +180,7 @@ class JobsTk:
         price = []
         for i in range(len(self.bookmarklist)):
             beernum.append(i)
-            saltmp = 0
-            saltt = int(self.bookmarklist[i].minSal)
-            if saltt > 10000000:
-                saltmp = (saltt//12)//209
-            elif 10000000>saltt > 1000000:
-                saltmp = saltt//209
-            else:
-                saltmp = saltt
-            price.append(saltmp)
+            price.append(job.salcount(int(self.bookmarklist[i].minSal)))
 
         fig = plt.figure()
         plt.pie(price,labels=beernum,shadow=True,autopct='%1.1f%%')
@@ -199,26 +193,18 @@ class JobsTk:
                 explode=(0, 0.1, 0, 0, 0),
                 autopct='%1.1f%%')
         '''
-        fig.set_size_inches(7.0, 3.6, forward=True)
+        fig.set_size_inches(7.0, 4.1, forward=True)
         self.cgraph = FigureCanvasTkAgg(fig, master=self.frame2)
-        self.cgraph.get_tk_widget().place(x=10, y=410)
+        self.cgraph.get_tk_widget().place(x=10, y=360)
 
-    def showstickgraph(self):
+    def showbargraph(self):
         fig = plt.figure()
 
         beernum = []
         price = []
         for i in range(len(self.bookmarklist)):
             beernum.append(i)
-            saltmp = 0
-            saltt = int(self.bookmarklist[i].minSal)
-            if saltt > 10000000:
-                saltmp = (saltt//12)//209
-            elif 10000000>saltt > 1000000:
-                saltmp = saltt//209
-            else:
-                saltmp = saltt
-            price.append(saltmp)
+            price.append(job.salcount(int(self.bookmarklist[i].minSal)))
 
         days_in_year = [88, 82, 36, 68, 43, 10, 30, 60, 90]
         plt.bar(range(len(price)), price)
@@ -228,12 +214,13 @@ class JobsTk:
         ax.set_xticks(beernum)
         ax.set_xticklabels(beernum,rotation=30)
 
-        fig.set_size_inches(7.0, 3.6, forward=True)
+        fig.set_size_inches(7.0, 4.1, forward=True)
         self.cgraph = FigureCanvasTkAgg(fig, master=self.frame2)
-        self.cgraph.get_tk_widget().place(x=10, y=410)
+        self.cgraph.get_tk_widget().place(x=10, y=360)
 
     def addbookmark(self):
-
+        self.jobs[self.sindex].bookmarkactive = True
+        self.bookmarkb.configure(image=self.onbookphoto)
         self.bookmarklist.append(self.jobs[self.sindex])
         self.bookmarkbox.delete(0, END)
         for i in range(len(self.bookmarklist)):
@@ -328,17 +315,21 @@ class JobsTk:
         self.busiCont = Label(lframe, text="", font=self.TempFont,anchor="w",justify=LEFT,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)#"주된 업종 : "
         self.busiCont.place(x=STRX, y=STRY + STRD * 14)
 
-        self.mapplus = Button(lframe, width=5, text='확대',font=self.TempFont, command=lambda: self.mapzoomchange(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.mapplus.place(x=800, y=750)
+        self.zoomplusphoto = PhotoImage(file=r'zoomplus.png')
+        self.zoomminusphoto = PhotoImage(file=r'zoomminus.png')
+        self.mapphoto = PhotoImage(file=r'map.png')
+        self.satellitemapphoto = PhotoImage(file=r'satellitemap.png')
+        self.mapplus = Button(lframe, width=40,height=40, text='확대',image=self.zoomplusphoto,font=self.TempFont, command=lambda: self.mapzoomchange(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.mapplus.place(x=800, y=745)
 
-        self.mapmin = Button(lframe, width=5, text='축소',font=self.TempFont, command=lambda: self.mapzoomchange(1),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.mapmin.place(x=900, y=750)
+        self.mapmin = Button(lframe, width=40,height=40, text='축소',image=self.zoomminusphoto,font=self.TempFont, command=lambda: self.mapzoomchange(1),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.mapmin.place(x=900, y=745)
 
-        self.maproad = Button(lframe, width=5, text='일반',font=self.TempFont, command=lambda: self.maptypechange(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.maproad.place(x=1000, y=750)
+        self.maproad = Button(lframe, width=40,height=40, text='일반',image=self.mapphoto,font=self.TempFont, command=lambda: self.maptypechange(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.maproad.place(x=1000, y=745)
 
-        self.maphybrid = Button(lframe, width=5, text='위성',font=self.TempFont, command=lambda: self.maptypechange(1),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.maphybrid.place(x=1100, y=750)
+        self.maphybrid = Button(lframe, width=40,height=40, text='위성',image=self.satellitemapphoto,font=self.TempFont, command=lambda: self.maptypechange(1),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.maphybrid.place(x=1100, y=745)
 
     def printLabel(self):
         # self.jobs[index].pintJobs()
@@ -375,7 +366,10 @@ class JobsTk:
         self.tempList = []
         for i in range(len(self.jobs)):
             self.tempList.append(self.jobs[i])
-
+        if self.jobs[self.sindex].bookmarkactive == False:
+            self.bookmarkb.configure(image = self.nobookphoto)
+        else:
+            self.bookmarkb.configure(image=self.onbookphoto)
         self.printLabel()
 
     def selectlist2(self,event):#리스트 목록 선택할때 정보 보여주기
@@ -660,7 +654,8 @@ class JobsTk:
         self.kentry = Entry(self.frame1,width=30)
         self.kentry.place(x=120, y=110)
 
-        self.btn = Button(self.frame1, width=10, text='검색', command=lambda : self.rsearch(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.jobserachphoto = PhotoImage(file=r'jobserach.png')
+        self.btn = Button(self.frame1, width=60,height=60, text='검색',image=self.jobserachphoto, command=lambda : self.rsearch(0),bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
         self.btn.place(x=500, y=70)
 
         self.listbox = Listbox(self.frame1,selectmode = 'single',width=100, height = 30)
@@ -671,57 +666,68 @@ class JobsTk:
         self.lpage = Label(text="[ 0 / 0 ]",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
         self.lpage.place(x=300, y=720)
 
+
         self.bright = Button(self.frame1, width=3, text='>', command=lambda : self.rsearch(1),font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
         self.bright.place(x=450, y=695)
 
         self.bleft = Button(self.frame1, width=3, text='<', command=lambda : self.rsearch(2),font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
         self.bleft.place(x=200, y=695)
 
-        self.bookmarkb = Button(self.frame1, width=8, text='북마크', command=self.addbookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bookmarkb.place(x=650, y=700)
+        self.nobookphoto = PhotoImage(file = r'non_bookmark.png')
+        self.onbookphoto = PhotoImage(file=r'on_bookmark.png')
+        self.bookmarkb = Button(self.frame1, width=50,height=59, text='북마크',image=self.nobookphoto, command=self.addbookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bookmarkb.place(x=650, y=680)
 
         self.createLabel(self.window)
 
         self.frame2 = tkinter.Frame(self.window,background=BACKGROUNDCOLOR)
         self.notebook.add(self.frame2, text="북마크")
 
-
+        self.lbookdescrpit = Label(self.frame2, text="북마크 리스트", font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.lbookdescrpit.place(x=10, y=10)
 
         self.bookmarkbox = Listbox(self.frame2,selectmode = 'single',width=100, height = 15)
-        self.bookmarkbox.place(x=10,y=50)
+        self.bookmarkbox.place(x=10,y=35)
         self.bookmarkbox.bind("<<ListboxSelect>>", self.selectlist2)
 
-        self.bookmarkb = Button(self.frame2, width=10, text='북마크제거', command=self.deletebookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bookmarkb.place(x=630, y=300)
+        self.bookmarkdeletephoto = PhotoImage(file=r'bookmarkdelete.png')
+        self.mailphoto = PhotoImage(file=r'mail.png')
+        self.piegraphphoto = PhotoImage(file=r'piegraph.png')
+        self.bargraphphoto = PhotoImage(file=r'bargraph.png')
+
+        self.bookmarkdeleb = Button(self.frame2, width=40,height=53, text='북마크제거',image=self.bookmarkdeletephoto, command=self.deletebookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bookmarkdeleb.place(x=670, y=282)
 
         self.eidL = tkinter.Label(self.frame2, text="구글 아이디",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.eidL.place(x=10, y=330)
+        self.eidL.place(x=10, y=300)
         self.eidentry = Entry(self.frame2,width=20)
-        self.eidentry.place(x=100, y=330)
+        self.eidentry.place(x=110, y=300)
 
         self.epwL = tkinter.Label(self.frame2, text="구글 비밀번호",font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.epwL.place(x=350, y=330)
+        self.epwL.place(x=10, y=330)
         self.epwentry = Entry(self.frame2,width=20,show="*")
-        self.epwentry.place(x=450, y=330)
-        self.bmail = Button(self.frame2, width=10, text='메일보내기', command=self.sendmail,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bmail.place(x=630, y=330)
+        self.epwentry.place(x=110, y=330)
+        self.bmail = Button(self.frame2, width=50,height=50, text='메일보내기',image=self.mailphoto, command=self.sendmail,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bmail.place(x=270, y=298)
 
-        self.bcirclegraph = Button(self.frame2, width=10, text='원그래프', command=self.showpiegraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bcirclegraph.place(x=10, y=370)
-        self.bstickgraph = Button(self.frame2, width=10, text='막대그래프', command=self.showstickgraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bstickgraph.place(x=350, y=370)
+        self.bcirclegraph = Button(self.frame2, width=50,height=50, text='원그래프',image=self.piegraphphoto, command=self.showpiegraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bcirclegraph.place(x=400, y=298)
+        self.bstickgraph = Button(self.frame2, width=50,height=50, text='막대그래프',image=self.bargraphphoto, command=self.showbargraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.bstickgraph.place(x=500, y=298)
 
         self.frame3 = tkinter.Frame(self.window,background=BACKGROUNDCOLOR)
         self.notebook.add(self.frame3, text="청년 취업 정보")
 
-        self.label3 = tkinter.Label(self.frame3, text="페이지 4의 내용")
-        self.label3.pack()
+        self.lsupportdescrpit = Label(self.frame3, text="청년 취업 지원 정보를 알려줍니다.", font=self.TempFont, bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.lsupportdescrpit.place(x=10, y=10)
 
-        self.sbtn = Button(self.frame3, width=10, text='검색', command=self.supportsearch)
+        self.webenterphoto = PhotoImage(file=r'webenter.png')
+
+        self.sbtn = Button(self.frame3, width=10, text='검색', command=self.supportsearch, font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
         self.sbtn.place(x=600,y=50)
 
-        self.webbtn = Button(self.frame3, width=10, text='열기', command=self.openweb)
-        self.webbtn.place(x=600,y=400)
+        self.webbtn = Button(self.frame3, width=50,height=50, text='열기',image=self.webenterphoto, command=self.openweb, font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.webbtn.place(x=660,y=350)
 
         self.supportbox = Listbox(self.frame3,selectmode = 'single',width=100, height = 15)
         self.supportbox.place(x=10,y=100)
