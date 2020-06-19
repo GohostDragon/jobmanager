@@ -29,3 +29,25 @@ class Support:
         +"취업상태 : " + self.empEtcCont+'\n'
         +"주소 : " + self.relInfoUrl+'\n')
         return rstr
+
+class Opens:
+    def __init__(self,empWantedTitle,empBusiNm,coClcdNm,empWantedStdt,empWantedEndt,empWantedTypeNm,empWantedHomepgDetail):
+        self.empWantedTitle = empWantedTitle
+        self.empBusiNm = empBusiNm
+        self.coClcdNm = coClcdNm
+        self.empWantedStdt = empWantedStdt
+        self.empWantedEndt = empWantedEndt
+        self.empWantedTypeNm = empWantedTypeNm
+        self.empWantedHomepgDetail = empWantedHomepgDetail
+
+    def pirntstrOpen(self):
+        return str(self.empBusiNm)
+
+    def TeleprintOpen(self):
+        rstr = (self.empWantedTitle + '\n'
+        +'기업명명 :'  + self.empBusiNm
+        +self.coClcdNm+'\n'
+        +'모집기간'+self.empWantedStdt+'~'+self.empWantedEndt+'\n'
+        +"고용형태 :" + self.empWantedTypeNm+'\n'
+        +'사이트 :' +self.empWantedHomepgDetail)
+        return rstr

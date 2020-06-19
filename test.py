@@ -92,6 +92,23 @@ def extractXmlSupportData(strXml):
         support.append(Support(busiNm,dtlBusiNm,busiSum,chargerOrgNm,busiTpCd,ageEtcCont,edubgEtcCont,empEtcCont,relInfoUrl))
     return support
 
+def extractXmlOpenData(strXml):
+    tree = ElementTree.fromstring(strXml)
+    opened = []
+    for wanted in tree.findall('dhsOpenEmpInfo'):
+        empWantedTitle = wanted.find('empWantedTitle').text
+        empBusiNm = wanted.find('empBusiNm').text
+        if wanted.find('coClcdNm').text:
+            coClcdNm = wanted.find('coClcdNm').text
+        else:
+            coClcdNm = '일반기업'
+        empWantedStdt = wanted.find('empWantedStdt').text
+        empWantedEndt = wanted.find('empWantedEndt').text
+        empWantedTypeNm = wanted.find('empWantedTypeNm').text
+        empWantedHomepgDetail = wanted.find('empWantedHomepgDetail').text
+        opened.append(Opens(empWantedTitle,empBusiNm,coClcdNm,empWantedStdt,empWantedEndt,empWantedTypeNm,empWantedHomepgDetail))
+    return opened
+
 def request(url):
     """지정한 url의 웹 문서를 요청하여, 본문을 반환한다."""
     response = urllib.request.urlopen(url).read().decode('utf-8')
@@ -206,8 +223,27 @@ class JobsTk:
             beernum.append(i)
             price.append(job.salcount(int(self.bookmarklist[i].minSal)))
 
-        days_in_year = [88, 82, 36, 68, 43, 10, 30, 60, 90]
         plt.bar(range(len(price)), price)
+        ax = plt.subplot()
+        ax.set_xlabel('company')
+        ax.set_ylabel('money')
+        ax.set_xticks(beernum)
+        ax.set_xticklabels(beernum,rotation=30)
+
+        fig.set_size_inches(7.0, 4.1, forward=True)
+        self.cgraph = FigureCanvasTkAgg(fig, master=self.frame2)
+        self.cgraph.get_tk_widget().place(x=10, y=360)
+
+    def showlinegraph(self):
+        fig = plt.figure()
+
+        beernum = []
+        price = []
+        for i in range(len(self.bookmarklist)):
+            beernum.append(i)
+            price.append(job.salcount(int(self.bookmarklist[i].minSal)))
+
+        plt.plot(beernum, price)
         ax = plt.subplot()
         ax.set_xlabel('company')
         ax.set_ylabel('money')
@@ -435,9 +471,48 @@ class JobsTk:
             self.tempList.append(self.supports[i])
 
         self.printSupport()
+
+    def opensearch(self):#검색 결과
+
+        text = request('http://openapi.work.go.kr/opi/opi/opia/dhsOpenEmpInfoAPI.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=L&returnType=XML&startPage=1&display=15')
+        self.opens = extractXmlOpenData(text)
+
+        self.openbox.delete(0, END)
+        for i in range(len(self.opens)):
+            self.openbox.insert(END, self.opens[i].pirntstrOpen())
+
+    def printOpen(self):
+        self.title.configure(text=self.tempList[self.sindex].empWantedTitle)
+        self.jobCont.configure(text='기업명 : '+self.tempList[self.sindex].empBusiNm)
+        self.salTpNm.configure(text='기업형태 : '+self.tempList[self.sindex].coClcdNm)
+
+        self.holidayTpNm.configure(text='모집기간 : '+self.tempList[self.sindex].empWantedStdt +'~'+self.tempList[self.sindex].empWantedEndt)
+
+        self.regionstr.configure(text='고용형태 : '+self.tempList[self.sindex].empWantedTypeNm)
+        self.certificate.configure(text="")
+        self.minEdubg.configure(text="")
+        self.career.configure(text="")
+        self.regDt.configure(text="")
+        self.rcptMthd.configure(text="")
+        self.company.configure(text="")
+        self.reperNm.configure(text="")
+        self.indTpCdNm.configure(text="")
+        self.busiCont.configure(text="")
+
+    def selectlist4(self,event):#리스트 목록 선택할때 정보 보여주기
+        index = self.openbox.curselection()[0]
+        self.sindex = index
+
+        self.tempList = []
+        for i in range(len(self.opens)):
+            self.tempList.append(self.opens[i])
+
+        self.printOpen()
+
     def openweb(self):
         webbrowser.open_new(str(self.supports[self.sindex].relInfoUrl))
-
+    def openweb2(self):
+        webbrowser.open_new(str(self.opens[self.sindex].empWantedHomepgDetail))
     def strJobinfo(self,index):
         text = request('http://openapi.work.go.kr/opi/opi/opia/wantedApi.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=D&returnType=XML&wantedAuthNo=' +self.tempList[index].wantedAuthNo + '&infoSvc=VALIDATION')
         self.coplist(text, index)
@@ -516,6 +591,13 @@ class JobsTk:
 
         return rsupports
 
+    def teleOpen(self):
+
+        text = request('http://openapi.work.go.kr/opi/opi/opia/dhsOpenEmpInfoAPI.do?authKey=WNKAHJXAWPT27BR8CVH0M2VR1HK&callTp=L&returnType=XML&startPage=1&display=10')
+        rsupports = extractXmlOpenData(text)
+
+        return rsupports
+
     def handler_telegrame(self,msg):
         content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
         if content_type == 'text':
@@ -525,8 +607,9 @@ class JobsTk:
                 command = args[0]
                 del args[0]
 
-                if command == '/안녕':
+                if command == '/도움말':
                     self.bot.sendMessage(chat_id,"안녕하세요")
+                    self.bot.sendMessage(chat_id, "명령어는 /검색, /지역, /지원정보, /공채 있습니다.")
                 elif command == '/검색':
                     w = " ".join(args)
                     teljobs = self.telekstr(w)
@@ -577,6 +660,11 @@ class JobsTk:
                     telSupports = self.teleSupport()
                     for i in range(len(telSupports)):
                         self.bot.sendMessage(chat_id,telSupports[i].TeleprintSupport())
+
+                elif command == '/공채':
+                    telOpens = self.teleOpen()
+                    for i in range(len(telOpens)):
+                        self.bot.sendMessage(chat_id,telOpens[i].TeleprintOpen())
 
 
 
@@ -694,6 +782,7 @@ class JobsTk:
         self.mailphoto = PhotoImage(file=r'mail.png')
         self.piegraphphoto = PhotoImage(file=r'piegraph.png')
         self.bargraphphoto = PhotoImage(file=r'bargraph.png')
+        self.linegraphphoto = PhotoImage(file=r'linegraph.png')
 
         self.bookmarkdeleb = Button(self.frame2, width=40,height=53, text='북마크제거',image=self.bookmarkdeletephoto, command=self.deletebookmark,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
         self.bookmarkdeleb.place(x=670, y=282)
@@ -711,9 +800,11 @@ class JobsTk:
         self.bmail.place(x=270, y=298)
 
         self.bcirclegraph = Button(self.frame2, width=50,height=50, text='원그래프',image=self.piegraphphoto, command=self.showpiegraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bcirclegraph.place(x=400, y=298)
+        self.bcirclegraph.place(x=380, y=298)
         self.bstickgraph = Button(self.frame2, width=50,height=50, text='막대그래프',image=self.bargraphphoto, command=self.showbargraph,font=self.TempFont,bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
-        self.bstickgraph.place(x=500, y=298)
+        self.bstickgraph.place(x=480, y=298)
+        self.blinegraph = Button(self.frame2, width=50, height=50, text='꺾은선그래프', image=self.linegraphphoto, command=self.showlinegraph, font=self.TempFont, bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.blinegraph.place(x=580, y=298)
 
         self.frame3 = tkinter.Frame(self.window,background=BACKGROUNDCOLOR)
         self.notebook.add(self.frame3, text="청년 취업 정보")
@@ -721,17 +812,31 @@ class JobsTk:
         self.lsupportdescrpit = Label(self.frame3, text="청년 취업 지원 정보를 알려줍니다.", font=self.TempFont, bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
         self.lsupportdescrpit.place(x=10, y=10)
 
+        self.lopendescrpit = Label(self.frame3, text="공채 정보를 알려줍니다.", font=self.TempFont, bg=BACKGROUNDCOLOR,fg=FONTCOLOR)
+        self.lopendescrpit.place(x=10, y=360)
+
         self.webenterphoto = PhotoImage(file=r'webenter.png')
+        self.supportsearchphoto = PhotoImage(file=r'supportsearch.png')
 
-        self.sbtn = Button(self.frame3, width=10, text='검색', command=self.supportsearch, font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
-        self.sbtn.place(x=600,y=50)
+        self.sbtn = Button(self.frame3, width=40,height=40, text='검색',image=self.supportsearchphoto, command=self.supportsearch, font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.sbtn.place(x=670,y=0)
 
-        self.webbtn = Button(self.frame3, width=50,height=50, text='열기',image=self.webenterphoto, command=self.openweb, font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
-        self.webbtn.place(x=660,y=350)
+        self.webbtn = Button(self.frame3, width=40,height=40, text='열기',image=self.webenterphoto, command=self.openweb, font=self.TempFont,bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.webbtn.place(x=670,y=295)
 
         self.supportbox = Listbox(self.frame3,selectmode = 'single',width=100, height = 15)
-        self.supportbox.place(x=10,y=100)
+        self.supportbox.place(x=10,y=50)
         self.supportbox.bind("<<ListboxSelect>>", self.selectlist3)
+
+        self.openbtn = Button(self.frame3, width=40, height=40, text='검색', image=self.supportsearchphoto,command=self.opensearch, font=self.TempFont, bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.openbtn.place(x=670, y=355)
+
+        self.webbtn2 = Button(self.frame3, width=40, height=40, text='열기', image=self.webenterphoto,command=self.openweb2, font=self.TempFont, bg=BACKGROUNDCOLOR, fg=FONTCOLOR)
+        self.webbtn2.place(x=670, y=648)
+
+        self.openbox = Listbox(self.frame3, selectmode='single', width=100, height=15)
+        self.openbox.place(x=10, y=400)
+        self.openbox.bind("<<ListboxSelect>>", self.selectlist4)
 
         self.start_telegramid()
         self.window.mainloop()
